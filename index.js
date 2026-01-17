@@ -2,6 +2,7 @@ import express from "express";
 import dotenv from "dotenv";
 import cors from "cors";
 import { sendSecretKey } from "./emailService.js";
+const verificationStore = new Map();
 
 dotenv.config();
 
@@ -33,41 +34,77 @@ app.get("/", (req, res) => {
 // ===============================
 app.post("/send-key", async (req, res) => {
   try {
-    const { email } = req.body;
+    const { email, paymentId } = req.body;
 
-    // ✅ Validate input FIRST
-    if (!email || typeof email !== "string") {
+    if (!email || !paymentId) {
       return res.status(400).json({
         success: false,
-        message: "Valid email is required"
+        message: "Email and Payment ID are required"
       });
     }
 
-    // ✅ Generate key
     const secretKey = generateSecretKey();
 
-    // 🔥 MUST await email sending
+    // ✅ STORE KEY
+    verificationStore.set(paymentId, {
+      email,
+      secretKey,
+      expiresAt: Date.now() + 10 * 60 * 1000 // 10 minutes
+    });
+
     await sendSecretKey(email, secretKey);
 
-    // ✅ Explicit success response for frontend
     return res.status(200).json({
       success: true
     });
 
-  } catch (err) {
-    console.error("SEND KEY ERROR:", err);
-
+  } catch (error) {
+    console.error("SEND-KEY ERROR:", error);
     return res.status(500).json({
-      success: false,
-      message: "Failed to send email"
+      success: false
     });
   }
 });
+app.post("/verify-key", (req, res) => {
+  const { paymentId, enteredKey } = req.body;
 
-// ===============================
-// 🚀 Start Server
-// ===============================
-const PORT = process.env.PORT || 8080;
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+  if (!paymentId || !enteredKey) {
+    return res.status(400).json({
+      success: false,
+      message: "Missing data"
+    });
+  }
+
+  const record = verificationStore.get(paymentId);
+
+  if (!record) {
+    return res.status(400).json({
+      success: false,
+      message: "No verification request found"
+    });
+  }
+
+  if (Date.now() > record.expiresAt) {
+    verificationStore.delete(paymentId);
+    return res.status(400).json({
+      success: false,
+      message: "Key expired"
+    });
+  }
+
+  if (record.secretKey !== enteredKey) {
+    return res.status(400).json({
+      success: false,
+      message: "Invalid Secret Key"
+    });
+  }
+
+  // ✅ SUCCESS → remove key after use
+  verificationStore.delete(paymentId);
+
+  return res.json({
+    success: true
+  });
 });
+
+
