@@ -23,25 +23,24 @@ app.get("/", (req, res) => {
 });
 
 app.post("/send-key", async (req, res) => {
+  const { email } = req.body;
+
   try {
-    const { email } = req.body;
-
-    if (!email) {
-      return res.status(400).json({ message: "Email required" });
-    }
-
-    const secretKey = generateSecretKey();
+    const secretKey = generateSecretKey(); // or however you create it
     await sendSecretKey(email, secretKey);
 
-    res.json({ message: "Secret key sent to email" });
-  } catch (err) {
-    console.error("EMAIL ERROR 👉", err);
-    res.status(500).json({ message: "Error sending email via backend" });
-  }
-});
+    // 🔥 THIS LINE IS THE FIX
+    return res.status(200).json({
+      success: true,
+      message: "Secret key sent to email"
+    });
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log("Server running on port", PORT);
+  } catch (err) {
+    console.error("SEND KEY ERROR:", err);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to send email"
+    });
+  }
 });
 
