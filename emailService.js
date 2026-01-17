@@ -12,7 +12,7 @@ export async function sendSecretKey(toEmail, secretKey) {
       body: JSON.stringify({
         sender: {
           name: "Movaro",
-          email: "no-reply@movaro.com" // must be verified in Brevo
+          email: "sheronpinto588@gmail.com" // must be verified in Brevo
         },
         to: [{ email: toEmail }],
         subject: "Your Secret Access Key",
