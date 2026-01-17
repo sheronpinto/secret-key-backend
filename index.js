@@ -9,6 +9,9 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+// ===============================
+// 🔐 Secret Key Generator
+// ===============================
 function generateSecretKey() {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
   let key = "";
@@ -18,25 +21,42 @@ function generateSecretKey() {
   return key.slice(0, 4) + "-" + key.slice(4);
 }
 
+// ===============================
+// 🟢 Health Check
+// ===============================
 app.get("/", (req, res) => {
   res.send("Backend running");
 });
 
+// ===============================
+// ✉️ Send Secret Key Route
+// ===============================
 app.post("/send-key", async (req, res) => {
-  const { email } = req.body;
-
   try {
-    const secretKey = generateSecretKey(); // or however you create it
+    const { email } = req.body;
+
+    // ✅ Validate input FIRST
+    if (!email || typeof email !== "string") {
+      return res.status(400).json({
+        success: false,
+        message: "Valid email is required"
+      });
+    }
+
+    // ✅ Generate key
+    const secretKey = generateSecretKey();
+
+    // 🔥 MUST await email sending
     await sendSecretKey(email, secretKey);
 
-    // 🔥 THIS LINE IS THE FIX
+    // ✅ Explicit success response for frontend
     return res.status(200).json({
-      success: true,
-      message: "Secret key sent to email"
+      success: true
     });
 
   } catch (err) {
     console.error("SEND KEY ERROR:", err);
+
     return res.status(500).json({
       success: false,
       message: "Failed to send email"
@@ -44,3 +64,10 @@ app.post("/send-key", async (req, res) => {
   }
 });
 
+// ===============================
+// 🚀 Start Server
+// ===============================
+const PORT = process.env.PORT || 8080;
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});
