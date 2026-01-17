@@ -2,13 +2,24 @@ import express from "express";
 import dotenv from "dotenv";
 import cors from "cors";
 import { sendSecretKey } from "./emailService.js";
-const verificationStore = new Map();
 
 dotenv.config();
 
 const app = express();
 app.use(cors());
 app.use(express.json());
+
+// ===============================
+// 🧠 Temporary in-memory store
+// ===============================
+const verificationStore = new Map();
+/*
+  paymentId => {
+    email,
+    secretKey,
+    expiresAt
+  }
+*/
 
 // ===============================
 // 🔐 Secret Key Generator
@@ -30,7 +41,7 @@ app.get("/", (req, res) => {
 });
 
 // ===============================
-// ✉️ Send Secret Key Route
+// ✉️ Send Secret Key
 // ===============================
 app.post("/send-key", async (req, res) => {
   try {
@@ -45,13 +56,14 @@ app.post("/send-key", async (req, res) => {
 
     const secretKey = generateSecretKey();
 
-    // ✅ STORE KEY
+    // ✅ Store key temporarily
     verificationStore.set(paymentId, {
       email,
       secretKey,
       expiresAt: Date.now() + 10 * 60 * 1000 // 10 minutes
     });
 
+    // ✅ Send email
     await sendSecretKey(email, secretKey);
 
     return res.status(200).json({
@@ -61,10 +73,15 @@ app.post("/send-key", async (req, res) => {
   } catch (error) {
     console.error("SEND-KEY ERROR:", error);
     return res.status(500).json({
-      success: false
+      success: false,
+      message: "Failed to send email"
     });
   }
 });
+
+// ===============================
+// 🔑 Verify Secret Key
+// ===============================
 app.post("/verify-key", (req, res) => {
   const { paymentId, enteredKey } = req.body;
 
@@ -99,12 +116,21 @@ app.post("/verify-key", (req, res) => {
     });
   }
 
-  // ✅ SUCCESS → remove key after use
+  // ✅ Success → remove key
   verificationStore.delete(paymentId);
 
   return res.json({
     success: true
   });
 });
+
+// ===============================
+// 🚀 Start Server
+// ===============================
+const PORT = process.env.PORT || 8080;
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});
+
 
 
