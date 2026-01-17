@@ -44,6 +44,8 @@ app.get("/", (req, res) => {
 // ✉️ Send Secret Key
 // ===============================
 app.post("/send-key", async (req, res) => {
+    console.log("SEND-KEY BODY:", req.body);
+
   try {
     const { email, paymentId } = req.body;
 
