@@ -1,18 +1,21 @@
 import nodemailer from "nodemailer";
 
 const transporter = nodemailer.createTransport({
-  service: "gmail",
+  host: "smtp-relay.brevo.com",
+  port: 587,
+  secure: false,
   auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS
+    user: "apikey",
+    pass: process.env.BREVO_SMTP_KEY
   }
 });
 
 export async function sendSecretKey(toEmail, secretKey) {
   await transporter.sendMail({
-    from: `"Secret Key App" <${process.env.EMAIL_USER}>`,
+    from: "LuminaBox <no-reply@luminabox.com>",
     to: toEmail,
     subject: "Your Secret Access Key",
     text: `Your secret access key is: ${secretKey}`
   });
 }
+
