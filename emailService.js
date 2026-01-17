@@ -1,5 +1,4 @@
 import nodemailer from "nodemailer";
-console.log("BREVO KEY PRESENT:", !!process.env.BREVO_SMTP_KEY);
 
 const transporter = nodemailer.createTransport({
   host: "smtp-relay.brevo.com",
