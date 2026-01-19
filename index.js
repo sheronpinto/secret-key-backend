@@ -4,6 +4,8 @@ import cors from "cors";
 import { sendSecretKey } from "./emailService.js";
 
 dotenv.config();
+import "./db.js";
+
 
 const app = express();
 app.use(cors());
