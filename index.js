@@ -2,6 +2,7 @@ import express from "express";
 import dotenv from "dotenv";
 import cors from "cors";
 import { sendSecretKey } from "./emailService.js";
+import Order from "./models/Order.js";
 
 dotenv.config();
 import "./db.js";
@@ -135,6 +136,62 @@ const PORT = process.env.PORT || 8080;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
+// ===============================
+// 💾 Save Order to MongoDB
+// ===============================
+app.post("/save-order", async (req, res) => {
+  try {
+    const {
+      paymentId,
+      name,
+      email,
+      pdfId,
+      pdfName,
+      price,
+      downloadUrl
+    } = req.body;
+
+    const exists = await Order.findOne({ paymentId });
+    if (exists) {
+      return res.json({ success: true, message: "Order already exists" });
+    }
+
+    await Order.create({
+      paymentId,
+      name,
+      email,
+      pdfId,
+      pdfName,
+      price,
+      downloadUrl
+    });
+
+    res.json({ success: true });
+  } catch (err) {
+    console.error("Save order error:", err);
+    res.status(500).json({ success: false });
+  }
+});
+// ===============================
+// 🔍 Find Order (Cross-device)
+// ===============================
+app.post("/find-order", async (req, res) => {
+  try {
+    const { paymentId, email } = req.body;
+
+    const order = await Order.findOne({ paymentId, email });
+    if (!order) {
+      return res.status(404).json({ found: false });
+    }
+
+    res.json({ found: true, order });
+  } catch (err) {
+    console.error("Find order error:", err);
+    res.status(500).json({ found: false });
+  }
+});
+
+
 
 
 
