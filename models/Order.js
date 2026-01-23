@@ -1,14 +1,20 @@
 import mongoose from "mongoose";
 
-const orderSchema = new mongoose.Schema({
-  paymentId: { type: String, required: true, unique: true },
-  name: { type: String },
-  email: { type: String, required: true },
-  pdfId: { type: String },
-  pdfName: { type: String },
-  price: { type: Number },
-  downloadUrl: { type: String },
-  createdAt: { type: Date, default: Date.now }
+const OrderSchema = new mongoose.Schema({
+  paymentId: String,
+  name: String,
+  email: String,
+  price: Number,
+
+  // ✅ ADD THESE
+  pdfId: String,
+  pdfName: String,
+  downloadUrl: String,
+
+  createdAt: {
+    type: Date,
+    default: Date.now
+  }
 });
 
-export default mongoose.model("Order", orderSchema);
+export default mongoose.model("Order", OrderSchema);

@@ -145,33 +145,36 @@ app.post("/save-order", async (req, res) => {
       paymentId,
       name,
       email,
+      price,
       pdfId,
       pdfName,
-      price,
       downloadUrl
     } = req.body;
 
     const exists = await Order.findOne({ paymentId });
     if (exists) {
-      return res.json({ success: true, message: "Order already exists" });
+      return res.json({ success: true });
     }
 
     await Order.create({
       paymentId,
       name,
       email,
+      price,
+
+      // ✅ SAVE FILE INFO
       pdfId,
       pdfName,
-      price,
       downloadUrl
     });
 
     res.json({ success: true });
   } catch (err) {
-    console.error("Save order error:", err);
+    console.error(err);
     res.status(500).json({ success: false });
   }
 });
+
 // ===============================
 // 🔍 Find Order (Cross-device)
 // ===============================
